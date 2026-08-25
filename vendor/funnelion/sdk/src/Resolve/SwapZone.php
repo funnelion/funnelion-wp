@@ -11,9 +11,20 @@ namespace Funnelion\Resolve;
  * `$address` can be null when the matched pool's exhaustion policy is
  * "refuse" — the caller should render the page's static default
  * in that case (or omit the zone entirely).
+ *
+ * `$selectors` is the zone's list of CSS selectors, present on the
+ * server-side resolve response so a server-side adapter can locate and
+ * rewrite the target elements itself (as an alternative to the
+ * `data-funnelion` marker contract). Empty when the response carries
+ * none.
+ *
+ * @property list<string> $selectors
  */
 final class SwapZone
 {
+    /**
+     * @param  list<string>  $selectors
+     */
     public function __construct(
         public readonly ?string $name,
         public readonly string $channelKind,
@@ -23,6 +34,7 @@ final class SwapZone
         public readonly ?string $maskPattern,
         public readonly ?int $matchedRuleId,
         public readonly ?string $startToken,
+        public readonly array $selectors = [],
     ) {}
 
     /**
@@ -49,6 +61,9 @@ final class SwapZone
             startToken: isset($raw['start_token']) && is_string($raw['start_token'])
                 ? $raw['start_token']
                 : null,
+            selectors: isset($raw['selectors']) && is_array($raw['selectors'])
+                ? array_values(array_filter($raw['selectors'], 'is_string'))
+                : [],
         );
     }
 }

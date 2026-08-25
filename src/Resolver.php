@@ -77,22 +77,33 @@ final class Resolver
 
     /**
      * Output-buffer callback: swap the resolved zones into the page.
-     * Skips instantly when the page has no markers, and never throws.
+     * Selector-based swap first (numbers placed by the zone's own CSS
+     * selectors, no page markup needed), then the marker-based swap for
+     * any data-funnelion elements. Never throws — on any error the
+     * original, pre-swap HTML is returned so the page keeps its
+     * hardcoded fallbacks.
      */
     public function swap(string $html): string
     {
-        if ($this->response === null) {
+        if ($this->response === null || $this->response->swapZones === []) {
             return $html;
         }
-        if (strpos($html, 'data-funnelion') === false) {
-            return $html; // nothing to swap — avoid the DOM parse cost
-        }
+
+        $original = $html;
+
         try {
-            return (new ZoneSwapper())->swap($html, $this->response);
+            $html = (new SelectorSwapper())->swap($html, $this->response);
+
+            if (strpos($html, 'data-funnelion') !== false) {
+                $html = (new ZoneSwapper())->swap($html, $this->response);
+            }
         } catch (Throwable $e) {
             Support::log('swap threw: ' . $e->getMessage());
-            return $html; // fail-open: ship the fallbacks
+
+            return $original; // fail-open
         }
+
+        return $html;
     }
 
     /** Only run on real, front-end, GET page views. */

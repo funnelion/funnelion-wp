@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'funnelion/wordpress',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => '8277698a7a9ccc0106854e905be6092c8b604de9',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,16 +13,16 @@
         'funnelion/sdk' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '9f22570317559d737885c85c2ca83338a4e7ddfe',
+            'reference' => 'a040ea3ff73a7b4c909c65d8b5ce020150c145bc',
             'type' => 'library',
             'install_path' => __DIR__ . '/../funnelion/sdk',
             'aliases' => array(),
             'dev_requirement' => false,
         ),
         'funnelion/wordpress' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => '8277698a7a9ccc0106854e905be6092c8b604de9',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

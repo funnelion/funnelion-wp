@@ -28,8 +28,10 @@ class ComposerStaticInita66f785ccdf17149b7a2713b64c17c45
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'FunnelionWP\\FormEvents' => __DIR__ . '/../..' . '/src/FormEvents.php',
+        'FunnelionWP\\Mask' => __DIR__ . '/../..' . '/src/Mask.php',
         'FunnelionWP\\Plugin' => __DIR__ . '/../..' . '/src/Plugin.php',
         'FunnelionWP\\Resolver' => __DIR__ . '/../..' . '/src/Resolver.php',
+        'FunnelionWP\\SelectorSwapper' => __DIR__ . '/../..' . '/src/SelectorSwapper.php',
         'FunnelionWP\\Settings' => __DIR__ . '/../..' . '/src/Settings.php',
         'FunnelionWP\\Support' => __DIR__ . '/../..' . '/src/Support.php',
         'Funnelion\\Client' => __DIR__ . '/..' . '/funnelion/sdk/src/Client.php',

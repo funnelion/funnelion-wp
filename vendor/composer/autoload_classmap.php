@@ -8,8 +8,10 @@ $baseDir = dirname($vendorDir);
 return array(
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
     'FunnelionWP\\FormEvents' => $baseDir . '/src/FormEvents.php',
+    'FunnelionWP\\Mask' => $baseDir . '/src/Mask.php',
     'FunnelionWP\\Plugin' => $baseDir . '/src/Plugin.php',
     'FunnelionWP\\Resolver' => $baseDir . '/src/Resolver.php',
+    'FunnelionWP\\SelectorSwapper' => $baseDir . '/src/SelectorSwapper.php',
     'FunnelionWP\\Settings' => $baseDir . '/src/Settings.php',
     'FunnelionWP\\Support' => $baseDir . '/src/Support.php',
     'Funnelion\\Client' => $vendorDir . '/funnelion/sdk/src/Client.php',

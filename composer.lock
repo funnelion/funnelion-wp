@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../funnelion-php",
-                "reference": "9f22570317559d737885c85c2ca83338a4e7ddfe"
+                "reference": "a040ea3ff73a7b4c909c65d8b5ce020150c145bc"
             },
             "require": {
                 "ext-curl": "*",

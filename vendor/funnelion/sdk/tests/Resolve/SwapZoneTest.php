@@ -20,6 +20,7 @@ final class SwapZoneTest extends TestCase
             'mask_pattern' => '+370 ### ## ###',
             'matched_rule_id' => 4,
             'start_token' => 'abc123',
+            'selectors' => ['a[href^="tel:"]', '.phone'],
         ]);
 
         $this->assertSame('Header phone', $zone->name);
@@ -30,6 +31,15 @@ final class SwapZoneTest extends TestCase
         $this->assertSame('+370 ### ## ###', $zone->maskPattern);
         $this->assertSame(4, $zone->matchedRuleId);
         $this->assertSame('abc123', $zone->startToken);
+        $this->assertSame(['a[href^="tel:"]', '.phone'], $zone->selectors);
+    }
+
+    public function testFromArrayDefaultsSelectorsToEmptyAndFiltersNonStrings(): void
+    {
+        $this->assertSame([], SwapZone::fromArray(['name' => 'X'])->selectors);
+
+        $zone = SwapZone::fromArray(['name' => 'X', 'selectors' => ['a', 5, null, '.b']]);
+        $this->assertSame(['a', '.b'], $zone->selectors);
     }
 
     public function testFromArrayDefaultsChannelKindToPhone(): void
