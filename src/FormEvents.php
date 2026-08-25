@@ -100,35 +100,54 @@ final class FormEvents
     {
         $flat = [];
         foreach ($posted as $key => $value) {
-            $flat[strtolower((string) $key)] = is_array($value) ? implode(', ', array_map('strval', $value)) : (string) $value;
+            $k = strtolower((string) $key);
+            // Drop Contact Form 7 internals (_wpcf7*) — never useful as lead data.
+            if (str_starts_with($k, '_wpcf7')) {
+                continue;
+            }
+            $flat[$k] = is_array($value) ? implode(', ', array_map('strval', $value)) : (string) $value;
         }
 
+        // Track which raw keys were consumed by a canonical field so we don't
+        // also pass them through under their raw name.
+        $used = [];
+        $pick = static function (array $candidates) use ($flat, &$used): string {
+            foreach ($candidates as $k) {
+                if (!empty($flat[$k])) { $used[] = $k; return $flat[$k]; }
+            }
+            return '';
+        };
+
         // email: explicit key first, else the first value that validates.
-        $email = '';
-        foreach (['email', 'your-email', 'e-mail', 'el-pastas'] as $k) {
-            if (!empty($flat[$k])) { $email = $flat[$k]; break; }
-        }
+        $email = $pick(['email', 'your-email', 'e-mail', 'el-pastas']);
         if ($email === '') {
-            foreach ($flat as $v) {
-                if (is_email($v)) { $email = $v; break; }
+            foreach ($flat as $k => $v) {
+                if (is_email($v)) { $email = $v; $used[] = $k; break; }
             }
         }
 
-        $name = '';
-        foreach (['name', 'your-name', 'fullname', 'vardas'] as $k) {
-            if (!empty($flat[$k])) { $name = $flat[$k]; break; }
-        }
-
-        $phone = '';
-        foreach (Settings::instance()->phoneFieldNames() as $k) {
-            if (!empty($flat[$k])) { $phone = $flat[$k]; break; }
-        }
+        $name    = $pick(['name', 'your-name', 'fullname', 'vardas']);
+        $phone   = $pick(Settings::instance()->phoneFieldNames());
+        $message = $pick(['message', 'your-message', 'comment', 'comments', 'zinute', 'žinutė', 'tekstas', 'klausimas']);
 
         $fields = array_filter([
-            'email' => $email,
-            'name'  => $name,
-            'phone' => $phone,
+            'email'   => $email,
+            'name'    => $name,
+            'phone'   => $phone,
+            'message' => $message,
         ], static fn ($v) => $v !== '');
+
+        // Pass through any remaining non-internal fields under their own key
+        // (e.g. subject, a custom select) so nothing the visitor entered is lost.
+        foreach ($flat as $k => $v) {
+            if ($v === '' || in_array($k, $used, true) || isset($fields[$k])) {
+                continue;
+            }
+            if (str_contains($k, 'honeypot')) {
+                continue;
+            }
+            $fields[$k] = $v;
+        }
 
         /** @var array<string,string> $fields */
         $fields = apply_filters('funnelion_form_fields', $fields, $posted);
