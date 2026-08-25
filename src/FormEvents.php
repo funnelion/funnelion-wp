@@ -23,8 +23,10 @@ final class FormEvents
 
     public function boot(): void
     {
-        // Contact Form 7 — fires only after mail was sent successfully.
-        add_action('wpcf7_mail_sent', [$this, 'contactForm7'], 10, 1);
+        // Contact Form 7 — fire when a submission passes validation (mail-
+        // independent): the lead is captured even if the notification email
+        // later bounces or SMTP is down.
+        add_action('wpcf7_before_send_mail', [$this, 'contactForm7'], 10, 1);
 
         // WooCommerce — order successfully placed.
         add_action('woocommerce_checkout_order_processed', [$this, 'wooOrder'], 20, 1);

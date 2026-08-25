@@ -54,7 +54,7 @@ final class Settings
             'ga_measurement_id'   => '',
             'form_events_enabled' => true,
             'cache_ttl'           => 60,
-            'phone_field_names'   => 'phone,tel,telefonas,phone-number,your-phone',
+            'phone_field_names'   => 'phone,tel,telefonas,phone-number,your-phone,your-tel',
             'debug'               => false,
         ];
     }

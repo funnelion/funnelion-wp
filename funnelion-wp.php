@@ -3,7 +3,7 @@
  * Plugin Name:       Funnelion Call Tracking
  * Plugin URI:        https://github.com/funnelion/funnelion-wp
  * Description:       Server-side dynamic number insertion (DNI) and conversion tracking for Funnelion. Wraps the official funnelion/sdk — resolves each visitor's tracking numbers server-side, swaps them into the page, sets the session cookie, and reports form/WooCommerce conversions.
- * Version:           0.2.0
+ * Version:           0.2.1
  * Requires at least: 6.0
  * Requires PHP:      8.1
  * Author:            Funnelion
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
     exit; // no direct access
 }
 
-define('FUNNELION_WP_VERSION', '0.2.0');
+define('FUNNELION_WP_VERSION', '0.2.1');
 define('FUNNELION_WP_FILE', __FILE__);
 define('FUNNELION_WP_DIR', plugin_dir_path(__FILE__));
 define('FUNNELION_WP_BASENAME', plugin_basename(__FILE__));
