@@ -47,6 +47,26 @@ do_action('funnelion_form_event', [
 ], $optional_form_id);
 ```
 
+## Analytics events (GA4 / Meta)
+
+The plugin fires **client-side** conversion events when a visitor interacts with a tracked contact point — language-agnostic names, all configurable in **Settings → Funnelion** (with a master on/off):
+
+| Event | Fires when |
+|---|---|
+| `phone_click` | a `tel:` link is clicked |
+| `email_click` | a `mailto:` link is clicked |
+| `lead_form_submit` | a Contact Form 7 form is submitted (`wpcf7mailsent`) |
+
+Each fires via `gtag()` (GA4) and `fbq()` (Meta Pixel) when those exist on the page (e.g. loaded by Google Site Kit); it safely no-ops otherwise.
+
+### GA4 server-side call attribution (GA-ids ping)
+
+Funnelion fires GA4 events for **actual received calls/emails** from its own servers (configured in the Funnelion dashboard → Integrations → GA4, e.g. a `call` trigger → `phone_call_received`). For those to land in the visitor's real GA4 session, Funnelion needs the visitor's GA `client_id` / `session_id`.
+
+`gtag` writes its `_ga` cookies only *after* the page renders, so the server-side resolve can't read them on first load. Set the **GA4 Measurement ID** in Settings → Funnelion and the plugin closes that gap: once `gtag` is live it reads the ids and beacons them to a same-origin AJAX endpoint (`?action=funnelion_ga`), which forwards them to Funnelion together with the HttpOnly session cookie — no secret ever reaches the browser. Without it, Funnelion still attributes the event from the session's UTMs; the ids just make it join the visitor's existing GA4 session instead of opening a new one.
+
+These client-side events are separate from that server-side dispatch: the plugin covers click/submit **intent**, Funnelion covers the **actual** received call/email. Keep form conversions in one place (the plugin's `lead_form_submit`) to avoid double-counting with a server-side `form` trigger.
+
 ## Hooks & filters
 
 | Filter | Purpose |

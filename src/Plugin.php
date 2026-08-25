@@ -26,11 +26,20 @@ final class Plugin
         $settings = Settings::instance();
         $settings->boot();
 
+        $configured = $settings->isEnabled() && $settings->token() !== '';
+
+        // The GA-ids beacon posts to admin-ajax, where is_admin() is true, so
+        // its AJAX endpoint must register regardless of the admin short-circuit
+        // below. The browser-facing script is registered on the front end only.
+        if ($configured && $settings->gaMeasurementId() !== '') {
+            (new GaIdsSync($this))->bootAjax();
+        }
+
         if (is_admin()) {
             return; // admin screens: settings UI only, no tracking
         }
 
-        if (!$settings->isEnabled() || $settings->token() === '') {
+        if (!$configured) {
             return; // not configured — stay completely inert
         }
 
@@ -42,6 +51,12 @@ final class Plugin
 
         if ($settings->analyticsEventsEnabled()) {
             (new AnalyticsEvents($this))->boot();
+        }
+
+        // Hand GA4 client/session ids to Funnelion so server-side call/email
+        // events attribute to the visitor's actual GA4 session.
+        if ($settings->gaMeasurementId() !== '') {
+            (new GaIdsSync($this))->bootFrontend();
         }
     }
 
