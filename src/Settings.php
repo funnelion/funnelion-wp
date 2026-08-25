@@ -50,9 +50,10 @@ final class Settings
             'enabled'             => true,
             'server_side_token'   => '',
             'base_uri'            => 'https://dash.funnelion.ai',
-            'timeout_ms'          => 500,
+            'timeout_ms'          => 1500,
             'ga_measurement_id'   => '',
             'form_events_enabled' => true,
+            'cache_ttl'           => 60,
             'phone_field_names'   => 'phone,tel,telefonas,phone-number,your-phone',
             'debug'               => false,
         ];
@@ -97,6 +98,11 @@ final class Settings
     public function formEventsEnabled(): bool
     {
         return (bool) $this->all()['form_events_enabled'];
+    }
+
+    public function cacheTtl(): int
+    {
+        return max(0, (int) $this->all()['cache_ttl']);
     }
 
     /** @return list<string> */
@@ -146,6 +152,7 @@ final class Settings
             'timeout_ms'          => max(100, (int) ($in['timeout_ms'] ?? $d['timeout_ms'])),
             'ga_measurement_id'   => sanitize_text_field((string) ($in['ga_measurement_id'] ?? '')),
             'form_events_enabled' => !empty($in['form_events_enabled']),
+            'cache_ttl'           => max(0, (int) ($in['cache_ttl'] ?? $d['cache_ttl'])),
             'phone_field_names'   => sanitize_text_field((string) ($in['phone_field_names'] ?? $d['phone_field_names'])),
             'debug'               => !empty($in['debug']),
         ];
@@ -209,6 +216,11 @@ final class Settings
                         <th scope="row"><label for="fw_timeout"><?php echo esc_html__('API timeout (ms)', 'funnelion-wp'); ?></label></th>
                         <td><input type="number" id="fw_timeout" min="100" step="50" name="<?php echo esc_attr(self::OPTION); ?>[timeout_ms]" value="<?php echo esc_attr((string) $o['timeout_ms']); ?>">
                         <p class="description"><?php echo esc_html__('Fail-open: if Funnelion is slower than this, the page renders its hardcoded fallbacks.', 'funnelion-wp'); ?></p></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="fw_cache"><?php echo esc_html__('Session cache (seconds)', 'funnelion-wp'); ?></label></th>
+                        <td><input type="number" id="fw_cache" min="0" step="10" name="<?php echo esc_attr(self::OPTION); ?>[cache_ttl]" value="<?php echo esc_attr((string) $o['cache_ttl']); ?>">
+                        <p class="description"><?php echo esc_html__('Cache each visitor\'s resolved numbers for this many seconds to skip an API call on every page view. 0 disables. Keep it well under the pool idle timeout.', 'funnelion-wp'); ?></p></td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="fw_base"><?php echo esc_html__('API base URI', 'funnelion-wp'); ?></label></th>

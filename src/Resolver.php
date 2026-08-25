@@ -36,12 +36,31 @@ final class Resolver
             return;
         }
 
+        $settings  = Settings::instance();
+        $ttl       = $settings->cacheTtl();
+        $visitorId = Session::readFromGlobals();
+
+        // Cache hit: a known visitor's resolved zones are reused for the
+        // TTL window, so most page views make no API call at all. The TTL
+        // is kept well below the pool's idle timeout, so an actively
+        // browsing visitor still re-resolves often enough to keep their
+        // server-side number assignment alive.
+        if ($ttl > 0 && $visitorId !== null) {
+            $cached = get_transient($this->cacheKey($visitorId));
+            if (is_array($cached)) {
+                Support::log('cache hit — no API call');
+                $this->response = ResolveResponse::fromArray($cached);
+                ob_start([$this, 'swap']); // cookie already present; no HTTP call
+                return;
+            }
+        }
+
         $client = $this->plugin->client();
         if ($client === null) {
             return;
         }
 
-        $settings = Settings::instance();
+        Support::log('resolve API call');
 
         try {
             $this->response = $client->resolveOrNull(new ResolveRequest(
@@ -49,7 +68,7 @@ final class Resolver
                 ip:          Support::clientIp(),
                 referrer:    Support::referrer(),
                 userAgent:   Support::userAgent(),
-                visitorId:   Session::readFromGlobals(),
+                visitorId:   $visitorId,
                 language:    Support::language(),
                 gaClientId:  Support::gaClientId(),
                 gaSessionId: Support::gaSessionId($settings->gaMeasurementId()),
@@ -72,7 +91,49 @@ final class Resolver
             ), false);
         }
 
+        // Cache this visitor's resolution to skip the API call next time.
+        if ($ttl > 0 && $this->response->visitorId !== null) {
+            set_transient(
+                $this->cacheKey($this->response->visitorId),
+                $this->responseToArray($this->response),
+                $ttl,
+            );
+        }
+
         ob_start([$this, 'swap']);
+    }
+
+    private function cacheKey(string $visitorId): string
+    {
+        return 'funnelion_wp_' . md5($visitorId);
+    }
+
+    /**
+     * Serialise a Response back to the API-shaped array that
+     * ResolveResponse::fromArray() reads, so it round-trips through the
+     * transient cache.
+     *
+     * @return array<string, mixed>
+     */
+    private function responseToArray(ResolveResponse $r): array
+    {
+        return [
+            'session_id'      => $r->sessionId,
+            'visitor_id'      => $r->visitorId,
+            'matched_rule_id' => $r->matchedRuleId,
+            'reason'          => $r->reason,
+            'swap_zones'      => array_map(static fn ($z): array => [
+                'name'            => $z->name,
+                'channel_kind'    => $z->channelKind,
+                'address'         => $z->address,
+                'source_label'    => $z->sourceLabel,
+                'pool_id'         => $z->poolId,
+                'mask_pattern'    => $z->maskPattern,
+                'matched_rule_id' => $z->matchedRuleId,
+                'start_token'     => $z->startToken,
+                'selectors'       => $z->selectors,
+            ], $r->swapZones),
+        ];
     }
 
     /**
