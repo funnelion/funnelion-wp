@@ -1,0 +1,40 @@
+{
+    "name": "funnelion/wordpress",
+    "description": "Official WordPress plugin for Funnelion server-side call tracking (DNI + conversions). Wraps funnelion/sdk.",
+    "type": "wordpress-plugin",
+    "license": "MIT",
+    "keywords": [
+        "wordpress",
+        "funnelion",
+        "call-tracking",
+        "attribution",
+        "dni",
+        "woocommerce",
+        "contact-form-7"
+    ],
+    "homepage": "https://github.com/funnelion/funnelion-wp",
+    "require": {
+        "php": ">=8.1",
+        "funnelion/sdk": "@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "FunnelionWP\\": "src/"
+        }
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../funnelion-php",
+            "options": {
+                "symlink": false
+            }
+        }
+    ],
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

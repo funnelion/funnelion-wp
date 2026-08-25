@@ -1,0 +1,6 @@
+# Keep vendor/ committed — this plugin ships as a drop-in with the SDK bundled.
+.DS_Store
+.idea/
+*.log
+composer.phar
+node_modules/

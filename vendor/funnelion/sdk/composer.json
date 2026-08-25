@@ -1,0 +1,38 @@
+{
+    "name": "funnelion/sdk",
+    "description": "Official PHP SDK for Funnelion server-side call tracking.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["funnelion", "call-tracking", "sdk", "tracking", "server-side", "attribution"],
+    "homepage": "https://github.com/funnelion/funnelion-php",
+    "support": {
+        "issues": "https://github.com/funnelion/funnelion-php/issues",
+        "source": "https://github.com/funnelion/funnelion-php"
+    },
+    "require": {
+        "php": "^8.1",
+        "ext-curl": "*",
+        "ext-dom": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Funnelion\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Funnelion\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "minimum-stability": "stable",
+    "config": {
+        "sort-packages": true
+    }
+}

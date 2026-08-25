@@ -1,0 +1,17 @@
+# Dev-only Docker setup. The library has no runtime services; this
+# exists so contributors don't need PHP installed on the host to run
+# composer / phpunit. Production consumers install funnelion/sdk via
+# Composer into their own runtime.
+#
+# Usage:
+#   docker compose run --rm php composer install
+#   docker compose run --rm php composer test
+#   docker compose run --rm php sh                  # interactive shell
+
+services:
+  php:
+    image: composer:lts
+    working_dir: /app
+    volumes:
+      - .:/app
+    profiles: [tools]
