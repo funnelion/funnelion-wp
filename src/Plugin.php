@@ -39,6 +39,10 @@ final class Plugin
         if ($settings->formEventsEnabled()) {
             (new FormEvents($this))->boot();
         }
+
+        if ($settings->analyticsEventsEnabled()) {
+            (new AnalyticsEvents($this))->boot();
+        }
     }
 
     /**

@@ -54,6 +54,10 @@ final class Settings
             'ga_measurement_id'   => '',
             'form_events_enabled' => true,
             'cache_ttl'           => 60,
+            'analytics_events'    => true,
+            'event_phone'         => 'phone_click',
+            'event_email'         => 'email_click',
+            'event_form'          => 'lead_form_submit',
             'phone_field_names'   => 'phone,tel,telefonas,phone-number,your-phone,your-tel',
             'debug'               => false,
         ];
@@ -105,6 +109,33 @@ final class Settings
         return max(0, (int) $this->all()['cache_ttl']);
     }
 
+    public function analyticsEventsEnabled(): bool
+    {
+        return (bool) $this->all()['analytics_events'];
+    }
+
+    public function eventPhone(): string
+    {
+        return $this->eventName('event_phone');
+    }
+
+    public function eventEmail(): string
+    {
+        return $this->eventName('event_email');
+    }
+
+    public function eventForm(): string
+    {
+        return $this->eventName('event_form');
+    }
+
+    /** A GA4-safe event name from the option, falling back to the default. */
+    private function eventName(string $key): string
+    {
+        $v = preg_replace('/[^a-zA-Z0-9_]/', '', (string) $this->all()[$key]);
+        return ($v !== null && $v !== '') ? substr($v, 0, 40) : (string) $this->defaults()[$key];
+    }
+
     /** @return list<string> */
     public function phoneFieldNames(): array
     {
@@ -153,6 +184,10 @@ final class Settings
             'ga_measurement_id'   => sanitize_text_field((string) ($in['ga_measurement_id'] ?? '')),
             'form_events_enabled' => !empty($in['form_events_enabled']),
             'cache_ttl'           => max(0, (int) ($in['cache_ttl'] ?? $d['cache_ttl'])),
+            'analytics_events'    => !empty($in['analytics_events']),
+            'event_phone'         => sanitize_text_field((string) ($in['event_phone'] ?? $d['event_phone'])),
+            'event_email'         => sanitize_text_field((string) ($in['event_email'] ?? $d['event_email'])),
+            'event_form'          => sanitize_text_field((string) ($in['event_form'] ?? $d['event_form'])),
             'phone_field_names'   => sanitize_text_field((string) ($in['phone_field_names'] ?? $d['phone_field_names'])),
             'debug'               => !empty($in['debug']),
         ];
@@ -211,6 +246,18 @@ final class Settings
                         <th scope="row"><label for="fw_phone"><?php echo esc_html__('Phone field names', 'funnelion-wp'); ?></label></th>
                         <td><input type="text" id="fw_phone" class="regular-text code" name="<?php echo esc_attr(self::OPTION); ?>[phone_field_names]" value="<?php echo esc_attr($o['phone_field_names']); ?>">
                         <p class="description"><?php echo esc_html__('Comma-separated form field names treated as the phone number.', 'funnelion-wp'); ?></p></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php echo esc_html__('Analytics events', 'funnelion-wp'); ?></th>
+                        <td><label><input type="checkbox" name="<?php echo esc_attr(self::OPTION); ?>[analytics_events]" value="1" <?php checked($o['analytics_events']); ?>> <?php echo esc_html__('Fire GA4 / Meta events on phone, email and form-submit', 'funnelion-wp'); ?></label>
+                        <p class="description"><?php echo esc_html__('Event names (GA4-safe: letters, numbers, underscores):', 'funnelion-wp'); ?></p>
+                        <p><label style="display:inline-block;min-width:9em"><?php echo esc_html__('Phone click', 'funnelion-wp'); ?></label>
+                           <input type="text" class="regular-text code" name="<?php echo esc_attr(self::OPTION); ?>[event_phone]" value="<?php echo esc_attr($o['event_phone']); ?>"></p>
+                        <p><label style="display:inline-block;min-width:9em"><?php echo esc_html__('Email click', 'funnelion-wp'); ?></label>
+                           <input type="text" class="regular-text code" name="<?php echo esc_attr(self::OPTION); ?>[event_email]" value="<?php echo esc_attr($o['event_email']); ?>"></p>
+                        <p><label style="display:inline-block;min-width:9em"><?php echo esc_html__('Form submit', 'funnelion-wp'); ?></label>
+                           <input type="text" class="regular-text code" name="<?php echo esc_attr(self::OPTION); ?>[event_form]" value="<?php echo esc_attr($o['event_form']); ?>"></p>
+                        </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="fw_timeout"><?php echo esc_html__('API timeout (ms)', 'funnelion-wp'); ?></label></th>
