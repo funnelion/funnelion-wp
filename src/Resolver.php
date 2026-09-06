@@ -182,7 +182,60 @@ final class Resolver
         if (is_feed() || is_robots() || is_trackback() || is_favicon()) {
             return false;
         }
+        if (self::isAssetRequest()) {
+            return false;
+        }
 
         return (bool) apply_filters('funnelion_should_run', true);
+    }
+
+    /**
+     * Whether the request is for a static file rather than a page.
+     *
+     * These only reach PHP at all *because* they 404 — if the file
+     * existed the web server would have served it and WordPress would
+     * never have booted. So WordPress renders its 404 template,
+     * template_redirect fires, and a browser fetching a source map that
+     * is not there resolves as though somebody had landed. Funnelion
+     * held 1,383 sessions on .js, 412 on .map and 62 on .css this way.
+     *
+     * Deliberately keyed on the extension and NOT on is_404(): a real
+     * person following a dead link also lands on a 404, and that is a
+     * genuine visit carrying genuine attribution. Skipping every 404
+     * would throw their utm_* and gclid away, and if they then navigated
+     * to a working page the session would start there with no source at
+     * all — a quiet attribution loss, worse than the noise being
+     * removed.
+     */
+    private static function isAssetRequest(): bool
+    {
+        $uri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
+        if ($uri === '') {
+            return false;
+        }
+
+        $path = (string) (wp_parse_url($uri, PHP_URL_PATH) ?? '');
+        if ($path === '') {
+            return false;
+        }
+
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        if ($extension === '') {
+            return false;
+        }
+
+        // Mirrors App\Services\Tracking\NonPageUrlDetector server-side,
+        // which is the backstop for sites still on an older plugin.
+        // .php / .html are absent from both: a customer's real landing
+        // page can be one, and scanner probes among them (/wp-config.php,
+        // /install.php) are a bot verdict, not a non-page.
+        return in_array($extension, [
+            'js', 'mjs', 'cjs', 'css', 'map',
+            'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'avif', 'ico', 'bmp', 'tiff',
+            'woff', 'woff2', 'ttf', 'otf', 'eot',
+            'mp4', 'webm', 'ogg', 'mp3', 'wav', 'avi', 'mov',
+            'pdf', 'zip', 'gz', 'tgz', 'rar', '7z', 'doc', 'docx', 'xls', 'xlsx',
+            'json', 'xml', 'txt', 'csv', 'rss', 'atom',
+        ], true);
     }
 }
