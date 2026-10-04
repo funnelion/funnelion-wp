@@ -6,6 +6,10 @@ namespace Composer\Autoload;
 
 class ComposerStaticInita66f785ccdf17149b7a2713b64c17c45
 {
+    public static $files = array (
+        'bc0af1337b39f0d750e835f5263eb646' => __DIR__ . '/..' . '/yahnis-elsts/plugin-update-checker/load-v5p7.php',
+    );
+
     public static $prefixLengthsPsr4 = array (
         'F' =>
         array (
@@ -27,7 +31,9 @@ class ComposerStaticInita66f785ccdf17149b7a2713b64c17c45
 
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'FunnelionWP\\AnalyticsEvents' => __DIR__ . '/../..' . '/src/AnalyticsEvents.php',
         'FunnelionWP\\FormEvents' => __DIR__ . '/../..' . '/src/FormEvents.php',
+        'FunnelionWP\\GaIdsSync' => __DIR__ . '/../..' . '/src/GaIdsSync.php',
         'FunnelionWP\\Mask' => __DIR__ . '/../..' . '/src/Mask.php',
         'FunnelionWP\\Plugin' => __DIR__ . '/../..' . '/src/Plugin.php',
         'FunnelionWP\\Resolver' => __DIR__ . '/../..' . '/src/Resolver.php',

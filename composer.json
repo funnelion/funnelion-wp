@@ -15,7 +15,8 @@
     "homepage": "https://github.com/funnelion/funnelion-wp",
     "require": {
         "php": ">=8.1",
-        "funnelion/sdk": "@dev"
+        "funnelion/sdk": "@dev",
+        "yahnis-elsts/plugin-update-checker": "^5.6"
     },
     "autoload": {
         "psr-4": {
@@ -33,7 +34,8 @@
     ],
     "config": {
         "optimize-autoloader": true,
-        "sort-packages": true
+        "sort-packages": true,
+        "platform-check": false
     },
     "minimum-stability": "dev",
     "prefer-stable": true

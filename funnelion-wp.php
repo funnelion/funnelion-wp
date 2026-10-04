@@ -3,7 +3,8 @@
  * Plugin Name:       Funnelion Call Tracking
  * Plugin URI:        https://github.com/funnelion/funnelion-wp
  * Description:       Server-side dynamic number insertion (DNI) and conversion tracking for Funnelion. Wraps the official funnelion/sdk — resolves each visitor's tracking numbers server-side, swaps them into the page, sets the session cookie, and reports form/WooCommerce conversions.
- * Version:           0.6.0
+ * Version:           0.7.0
+ * Update URI:        https://github.com/funnelion/funnelion-wp
  * Requires at least: 6.0
  * Requires PHP:      8.1
  * Author:            Funnelion
@@ -19,7 +20,7 @@ if (!defined('ABSPATH')) {
     exit; // no direct access
 }
 
-define('FUNNELION_WP_VERSION', '0.6.0');
+define('FUNNELION_WP_VERSION', '0.7.0');
 define('FUNNELION_WP_FILE', __FILE__);
 define('FUNNELION_WP_DIR', plugin_dir_path(__FILE__));
 define('FUNNELION_WP_BASENAME', plugin_basename(__FILE__));
@@ -42,6 +43,18 @@ spl_autoload_register(static function (string $class): void {
         require $file;
     }
 });
+
+// Self-updates from GitHub Releases (the funnelion-wp.zip asset built by CI).
+// Registered before the SDK check so a broken install can still update itself.
+if (class_exists(\YahnisElsts\PluginUpdateChecker\v5\PucFactory::class)) {
+    $funnelion_wp_updater = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+        'https://github.com/funnelion/funnelion-wp/',
+        FUNNELION_WP_FILE,
+        'funnelion-wp'
+    );
+    $funnelion_wp_updater->setBranch('main');
+    $funnelion_wp_updater->getVcsApi()->enableReleaseAssets('/funnelion-wp\.zip$/');
+}
 
 // The SDK must be present or the plugin cannot function.
 if (!class_exists(\Funnelion\Client::class)) {

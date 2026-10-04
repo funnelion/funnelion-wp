@@ -23,6 +23,12 @@ define('FUNNELION_SERVER_SIDE_TOKEN', 'srv_xxx');
 // define('FUNNELION_BASE_URI', 'https://dash.funnelion.ai'); // only to target another env
 ```
 
+## Updates
+
+The plugin updates itself from this repo's [GitHub Releases](https://github.com/funnelion/funnelion-wp/releases) via [plugin-update-checker](https://github.com/YahnisElsts/plugin-update-checker). New versions appear in *Plugins* like any wordpress.org plugin; click **Enable auto-updates** on the plugin row to have WordPress install them unattended (it checks about every 12 hours — *Dashboard → Updates → Check again* forces it).
+
+**Releasing:** bump `Version:` and `FUNNELION_WP_VERSION` in `funnelion-wp.php`, commit, then `git tag vX.Y.Z && git push origin main vX.Y.Z`. The Release workflow checks the tag matches both versions, zips the plugin with `vendor/`, and publishes the release that sites update from. Keep `vendor/` committed — after changing dependencies run `composer update --no-dev`.
+
 ## Marking up your theme
 
 Add `data-funnelion="<Zone name>"` to the phone/email elements. The hardcoded value inside is the fallback. Zone names must match the swap zones configured in Funnelion.

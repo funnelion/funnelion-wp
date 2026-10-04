@@ -1,0 +1,42 @@
+name: Release
+
+# Push a tag like v0.7.0 → builds funnelion-wp.zip and publishes a GitHub Release.
+# Installed sites pick it up through plugin-update-checker (wp-admin → Plugins).
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the tag matches the plugin version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          header=$(sed -n 's/^ \* Version: *//p' funnelion-wp.php | tr -d '[:space:]')
+          const=$(sed -n "s/^define('FUNNELION_WP_VERSION', '\(.*\)');/\1/p" funnelion-wp.php)
+          echo "tag=$tag header=$header const=$const"
+          [ "$tag" = "$header" ] && [ "$tag" = "$const" ] || { echo "::error::Tag v$tag does not match Version header ($header) / FUNNELION_WP_VERSION ($const)"; exit 1; }
+
+      - name: Check the bundled vendor/ is complete
+        run: |
+          for f in vendor/autoload.php vendor/funnelion/sdk/src vendor/yahnis-elsts/plugin-update-checker/load-v5p7.php; do
+            [ -e "$f" ] || { echo "::error::$f missing — vendor/ must be committed"; exit 1; }
+          done
+
+      - name: Build funnelion-wp.zip
+        run: |
+          mkdir -p build/funnelion-wp
+          rsync -a --exclude='.git*' --exclude='.github' --exclude='build' --exclude='composer.lock' ./ build/funnelion-wp/
+          (cd build && zip -qr ../funnelion-wp.zip funnelion-wp)
+          unzip -l funnelion-wp.zip | tail -1
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" funnelion-wp.zip --title "$GITHUB_REF_NAME" --generate-notes

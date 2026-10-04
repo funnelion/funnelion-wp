@@ -7,7 +7,9 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
+    'FunnelionWP\\AnalyticsEvents' => $baseDir . '/src/AnalyticsEvents.php',
     'FunnelionWP\\FormEvents' => $baseDir . '/src/FormEvents.php',
+    'FunnelionWP\\GaIdsSync' => $baseDir . '/src/GaIdsSync.php',
     'FunnelionWP\\Mask' => $baseDir . '/src/Mask.php',
     'FunnelionWP\\Plugin' => $baseDir . '/src/Plugin.php',
     'FunnelionWP\\Resolver' => $baseDir . '/src/Resolver.php',
