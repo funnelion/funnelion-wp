@@ -50,6 +50,7 @@ final class Resolver
             if (is_array($cached)) {
                 Support::log('cache hit — no API call');
                 $this->response = ResolveResponse::fromArray($cached);
+                $this->markUncacheable();
                 ob_start([$this, 'swap']); // cookie already present; no HTTP call
                 return;
             }
@@ -100,7 +101,25 @@ final class Resolver
             );
         }
 
+        $this->markUncacheable();
         ob_start([$this, 'swap']);
+    }
+
+    /**
+     * Keep this page out of every page cache. Its numbers belong to one
+     * visitor; a cached copy would hand them to everyone who comes next,
+     * attributing their calls to a stranger's session. DONOTCACHEPAGE is
+     * the flag WP Rocket, W3TC, WP Super Cache, WP-Optimize and LiteSpeed
+     * honour; the no-store headers cover proxies and CDNs.
+     */
+    private function markUncacheable(): void
+    {
+        if (!defined('DONOTCACHEPAGE')) {
+            define('DONOTCACHEPAGE', true);
+        }
+        if (!headers_sent()) {
+            nocache_headers();
+        }
     }
 
     private function cacheKey(string $visitorId): string

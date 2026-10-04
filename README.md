@@ -35,6 +35,14 @@ Add `data-funnelion="<Zone name>"` to the phone/email elements. The hardcoded va
 
 The element must be a **leaf** (text only, no nested tags). `tel:`/`mailto:` hrefs are rewritten too.
 
+### Selector-based zones (no markup)
+
+Zones whose selectors look like `a[href="tel:…"]` / `a[href^="mailto:…"]` (`=`, `^=`, `$=`, `*=`) are swapped with no theme changes. The href is rewritten, and so is the visible address: a text-only link has its text replaced; a link with markup inside (an icon `<span>`/`<img>`, the number in a `<p>`) keeps that markup and only the text and `title`/`alt`/`aria-label` values that spell the link's original address are replaced. Phones match on the last 8 digits, so `+370 678 39400`, `+37067839400` and `8 678 39400` are all recognised.
+
+## Page caching
+
+A page with swapped numbers belongs to one visitor, so the plugin keeps it out of page caches: it defines `DONOTCACHEPAGE` (honoured by WP Rocket, W3 Total Cache, WP Super Cache, WP-Optimize, LiteSpeed Cache) and sends no-store headers for proxies/CDNs. Purge the page cache once after activating, or pages cached before the plugin was installed keep being served with the original numbers.
+
 ## Conversions
 
 Contact Form 7 and WooCommerce work out of the box (toggle in settings). For any other form, call the generic hook from your handler after it succeeds:
