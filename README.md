@@ -25,9 +25,30 @@ define('FUNNELION_SERVER_SIDE_TOKEN', 'srv_xxx');
 
 ## Updates
 
-The plugin updates itself from this repo's [GitHub Releases](https://github.com/funnelion/funnelion-wp/releases) via [plugin-update-checker](https://github.com/YahnisElsts/plugin-update-checker). New versions appear in *Plugins* like any wordpress.org plugin; click **Enable auto-updates** on the plugin row to have WordPress install them unattended (it checks about every 12 hours — *Dashboard → Updates → Check again* forces it).
+The plugin updates itself from this repo's [GitHub Releases](https://github.com/funnelion/funnelion-wp/releases) via [plugin-update-checker](https://github.com/YahnisElsts/plugin-update-checker), starting with **v0.7.1**. New versions appear in *Plugins* like any wordpress.org plugin. WordPress checks about every 12 hours; *Dashboard → Updates → Check again* forces it.
 
-**Releasing:** bump `Version:` and `FUNNELION_WP_VERSION` in `funnelion-wp.php`, commit, then `git tag vX.Y.Z && git push origin main vX.Y.Z`. The Release workflow checks the tag matches both versions, zips the plugin with `vendor/`, and publishes the release that sites update from. Keep `vendor/` committed — after changing dependencies run `composer update --no-dev`.
+**Once per site:**
+
+1. If the site runs a version older than 0.7.1, upload the latest release's `funnelion-wp.zip` by hand one last time (*Plugins → Add New → Upload Plugin → Replace current with uploaded*). Older versions have no updater.
+2. Click **Enable auto-updates** on the plugin row. Without it, updates still show up in wp-admin but someone has to click *Update now*.
+
+Always take the zip from the [latest release](https://github.com/funnelion/funnelion-wp/releases/latest). Don't zip a working copy: the release zip is built from a clean checkout and is verified to contain `vendor/`.
+
+## Releasing
+
+1. Bump both `Version:` and `FUNNELION_WP_VERSION` in `funnelion-wp.php`, commit, and push `main`.
+2. Tag and push the tag **in its own push**:
+   ```sh
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+3. The Release workflow (`.github/workflows/release.yml`) fails unless the tag matches both version strings and `vendor/` is complete. It then builds `funnelion-wp.zip` (top-level folder `funnelion-wp/`, without `.git*`, `.github` or `composer.lock`) and publishes the release that sites update from. Check the *Actions* tab: if no run appeared, no site gets the update.
+
+Notes:
+
+- Push the tag separately from any commit that changes the workflow. When the workflow file and the tag arrive in one push, GitHub may not run it. That is why `v0.7.0` exists as a tag with no release.
+- Keep `vendor/` committed. After changing dependencies, run `composer update --no-dev`. `funnelion/sdk` comes from a `../funnelion-php` path repository, so run Composer with both repos checked out side by side. Composer's `platform-check` is disabled on purpose, so a host with the wrong PHP version can't take down the whole site from the autoloader.
+- The `Update URI` header stops WordPress from offering an unrelated wordpress.org plugin with the same `funnelion-wp` slug as an update.
 
 ## Marking up your theme
 
