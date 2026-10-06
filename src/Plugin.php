@@ -35,6 +35,13 @@ final class Plugin
             (new GaIdsSync($this))->bootAjax();
         }
 
+        // Same for form events: themes commonly submit forms to admin-ajax
+        // and call do_action('funnelion_form_event') from that handler, so
+        // the listener must exist there too or the action fires unheard.
+        if ($configured && $settings->formEventsEnabled()) {
+            (new FormEvents($this))->boot();
+        }
+
         if (is_admin()) {
             return; // admin screens: settings UI only, no tracking
         }
@@ -44,10 +51,6 @@ final class Plugin
         }
 
         (new Resolver($this))->boot();
-
-        if ($settings->formEventsEnabled()) {
-            (new FormEvents($this))->boot();
-        }
 
         if ($settings->analyticsEventsEnabled()) {
             (new AnalyticsEvents($this))->boot();

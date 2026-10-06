@@ -175,7 +175,9 @@ final class FormEvents
             $response = $client->formEventOrNull(new FormEventRequest(
                 ip:          Support::clientIp(),
                 fields:      $fields,
-                url:         Support::currentUrl(),
+                // Behind admin-ajax the request URL is admin-ajax.php; the
+                // page the visitor submitted from is the referrer.
+                url:         wp_doing_ajax() ? (Support::referrer() ?? Support::currentUrl()) : Support::currentUrl(),
                 referrer:    Support::referrer(),
                 userAgent:   Support::userAgent(),
                 visitorId:   Session::readFromGlobals(),
