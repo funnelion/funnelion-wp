@@ -36,6 +36,15 @@ final class Resolver
             return;
         }
 
+        // From here on this page view is visitor-specific, so take it out
+        // of every page cache *before* anything can fail. Marking it only
+        // on the paths that reach the swap left one hole: a resolve that
+        // timed out returned early, and the page — rendered with the
+        // hardcoded numbers — was then cached and served to everyone who
+        // came after, with no cookie and no swap, until that entry aged
+        // out. Fail-open must not mean fail-cached.
+        $this->markUncacheable();
+
         $settings  = Settings::instance();
         $ttl       = $settings->cacheTtl();
         $visitorId = Session::readFromGlobals();
@@ -50,7 +59,6 @@ final class Resolver
             if (is_array($cached)) {
                 Support::log('cache hit — no API call');
                 $this->response = ResolveResponse::fromArray($cached);
-                $this->markUncacheable();
                 ob_start([$this, 'swap']); // cookie already present; no HTTP call
                 return;
             }
@@ -101,7 +109,6 @@ final class Resolver
             );
         }
 
-        $this->markUncacheable();
         ob_start([$this, 'swap']);
     }
 
