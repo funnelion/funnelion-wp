@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace FunnelionWP;
 
+use Funnelion\Client;
+use Funnelion\Config;
 use Funnelion\Cookie\Session;
 use Funnelion\Html\ZoneSwapper;
 use Funnelion\Http\AfterResponse;
@@ -129,12 +131,22 @@ final class Resolver
      */
     private function reportPageViewAfterResponse(string $visitorId): void
     {
-        $client = $this->plugin->client();
-        if ($client === null) {
+        $settings = Settings::instance();
+        $token    = $settings->token();
+        if ($token === '') {
             return;
         }
 
-        $settings = Settings::instance();
+        // Its own client with a tighter timeout than resolve's: where the
+        // SAPI can't hand the response over early (mod_php, CGI) the
+        // visitor's connection stays open until this returns, and a lost
+        // page view only leaves a gap in one visitor's history.
+        $client = new Client(new Config(
+            siteToken:      $token,
+            baseUri:        $settings->baseUri(),
+            timeoutSeconds: min($settings->timeoutSeconds(), 0.5),
+        ));
+
         $request  = new PageViewRequest(
             visitorId:   $visitorId,
             url:         Support::currentUrl(),
