@@ -57,9 +57,12 @@ final class Resolver
         if ($ttl > 0 && $visitorId !== null) {
             $cached = get_transient($this->cacheKey($visitorId));
             if (is_array($cached)) {
-                Support::log('cache hit — no API call');
+                Support::log('cache hit — no resolve call');
                 $this->response = ResolveResponse::fromArray($cached);
-                ob_start([$this, 'swap']); // cookie already present; no HTTP call
+                ob_start([$this, 'swap']); // cookie already present; no resolve call
+                // Funnelion still has to learn which page this is, or the
+                // visitor's path skips every page served from the cache.
+                $this->reportPageViewAfterResponse($visitorId);
                 return;
             }
         }
@@ -110,6 +113,56 @@ final class Resolver
         }
 
         ob_start([$this, 'swap']);
+    }
+
+    /**
+     * Tell Funnelion the visitor opened this page (/api/v1/page-view),
+     * once the page itself has gone out.
+     *
+     * Only for cache hits: a resolve call already carries the URL. Runs
+     * on `shutdown` after WordPress has flushed the output buffers, and
+     * hands the response to the visitor first where the SAPI allows it
+     * (PHP-FPM, LiteSpeed), so the visitor never waits on it. Not a
+     * non-blocking wp_remote_post: those time out before the TLS
+     * handshake and are routinely never sent. Fail-silent.
+     */
+    private function reportPageViewAfterResponse(string $visitorId): void
+    {
+        $settings = Settings::instance();
+        $token    = $settings->token();
+        if ($token === '') {
+            return;
+        }
+
+        $payload = array_filter([
+            'visitor_id'    => $visitorId,
+            'url'           => Support::currentUrl(),
+            'language'      => Support::language(),
+            'ga_client_id'  => Support::gaClientId(),
+            'ga_session_id' => Support::gaSessionId($settings->gaMeasurementId()),
+        ], static fn ($v) => $v !== null && $v !== '');
+
+        add_action('shutdown', static function () use ($settings, $token, $payload): void {
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            } elseif (function_exists('litespeed_finish_request')) {
+                litespeed_finish_request();
+            }
+
+            $result = wp_remote_post($settings->baseUri() . '/api/v1/page-view', [
+                'timeout' => $settings->timeoutSeconds(),
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json',
+                ],
+                'body'    => (string) wp_json_encode($payload),
+            ]);
+
+            Support::log(is_wp_error($result)
+                ? 'page-view failed: ' . $result->get_error_message()
+                : 'page-view sent: ' . wp_remote_retrieve_response_code($result));
+        }, PHP_INT_MAX);
     }
 
     /**
