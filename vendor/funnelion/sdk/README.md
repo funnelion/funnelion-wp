@@ -135,6 +135,28 @@ $client->formEventOrNull(new FormEventRequest(
 
 `formEvent()` (without the `OrNull` suffix) throws a typed exception on failure — use that when you want to log/alert on attribution drops.
 
+## Page views
+
+If you cache the resolve response per visitor (recommended — most pages then make no API call), report the pages you serve from that cache. A resolve already carries its URL; cached pages otherwise never reach Funnelion, so the visitor's browsing history skips them and their path can't be followed.
+
+Send it **after** the response, so it never adds to the visitor's load time:
+
+```php
+use Funnelion\Http\AfterResponse;
+use Funnelion\PageView\Request as PageViewRequest;
+
+// Plain PHP: runs at shutdown, after fastcgi_finish_request()/litespeed_finish_request().
+AfterResponse::defer(fn () => $client->pageViewQuietly(new PageViewRequest(
+    visitorId: $_COOKIE['funnelion_session'],
+    url:       $currentUrl,
+)));
+
+// Laravel: defer(fn () => $client->pageViewQuietly(...));
+// Symfony: call it from a kernel.terminate listener.
+```
+
+`pageViewQuietly()` returns whether Funnelion accepted it; `pageView()` throws like `resolve()`. Only a live session is touched — an unknown visitor id is accepted and ignored.
+
 ## Language
 
 Both `Resolve\Request` and `FormEvent\Request` accept an optional `language` field. Funnelion stores it on the visitor's tracking session and uses it to drive downstream attribution (e.g. when Funnelion fires GA4 events for inbound emails and calls, the language is read from the session — no URL parsing on Funnelion's side).

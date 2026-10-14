@@ -14,6 +14,7 @@ use Funnelion\FormEvent\Request as FormEventRequest;
 use Funnelion\FormEvent\Response as FormEventResponse;
 use Funnelion\Http\CurlTransport;
 use Funnelion\Http\Transport;
+use Funnelion\PageView\Request as PageViewRequest;
 use Funnelion\Resolve\Request;
 use Funnelion\Resolve\Response;
 
@@ -108,6 +109,38 @@ final class Client
     }
 
     /**
+     * Report a page the visitor opened that you rendered without calling
+     * resolve (typically: served from your per-visitor resolve cache).
+     * Keeps the visitor's browsing history complete and their tracking
+     * number assigned while they browse. See PageView\Request.
+     *
+     * Send it after the response — Http\AfterResponse::defer(), Laravel's
+     * defer(), Symfony's kernel.terminate — so it never adds to the
+     * visitor's load time. Throws a typed FunnelionException on failure;
+     * use pageViewQuietly() to ignore failures.
+     */
+    public function pageView(PageViewRequest $request): void
+    {
+        $this->send('/api/v1/page-view', $request->toArray());
+    }
+
+    /**
+     * pageView, returning whether Funnelion accepted it instead of
+     * throwing. A lost page view only leaves a gap in one visitor's
+     * history, so this is the usual call.
+     */
+    public function pageViewQuietly(PageViewRequest $request): bool
+    {
+        try {
+            $this->pageView($request);
+
+            return true;
+        } catch (FunnelionException) {
+            return false;
+        }
+    }
+
+    /**
      * Shared POST + auth + decode. Returns the parsed JSON body of a
      * 2xx response; throws a typed FunnelionException for 4xx/5xx.
      *
@@ -138,7 +171,8 @@ final class Client
     private function parseJsonBody(int $statusCode, string $body): array
     {
         if ($statusCode >= 200 && $statusCode < 300) {
-            return $this->decodeJson($body);
+            // 204 No Content (page-view) has nothing to decode.
+            return $body === '' ? [] : $this->decodeJson($body);
         }
 
         $decoded = $body !== '' ? $this->tryDecodeJson($body) : null;

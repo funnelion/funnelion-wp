@@ -6,6 +6,8 @@ namespace FunnelionWP;
 
 use Funnelion\Cookie\Session;
 use Funnelion\Html\ZoneSwapper;
+use Funnelion\Http\AfterResponse;
+use Funnelion\PageView\Request as PageViewRequest;
 use Funnelion\Resolve\Request as ResolveRequest;
 use Funnelion\Resolve\Response as ResolveResponse;
 use Throwable;
@@ -116,53 +118,34 @@ final class Resolver
     }
 
     /**
-     * Tell Funnelion the visitor opened this page (/api/v1/page-view),
+     * Tell Funnelion the visitor opened this page (Client::pageView),
      * once the page itself has gone out.
      *
-     * Only for cache hits: a resolve call already carries the URL. Runs
-     * on `shutdown` after WordPress has flushed the output buffers, and
-     * hands the response to the visitor first where the SAPI allows it
-     * (PHP-FPM, LiteSpeed), so the visitor never waits on it. Not a
-     * non-blocking wp_remote_post: those time out before the TLS
-     * handshake and are routinely never sent. Fail-silent.
+     * Only for cache hits: a resolve call already carries the URL.
+     * AfterResponse::defer() runs it at PHP shutdown — after WordPress's
+     * own shutdown hooks have flushed the swapped page — and hands the
+     * response to the visitor first under PHP-FPM / LiteSpeed, so the
+     * visitor never waits on it. Fail-silent.
      */
     private function reportPageViewAfterResponse(string $visitorId): void
     {
-        $settings = Settings::instance();
-        $token    = $settings->token();
-        if ($token === '') {
+        $client = $this->plugin->client();
+        if ($client === null) {
             return;
         }
 
-        $payload = array_filter([
-            'visitor_id'    => $visitorId,
-            'url'           => Support::currentUrl(),
-            'language'      => Support::language(),
-            'ga_client_id'  => Support::gaClientId(),
-            'ga_session_id' => Support::gaSessionId($settings->gaMeasurementId()),
-        ], static fn ($v) => $v !== null && $v !== '');
+        $settings = Settings::instance();
+        $request  = new PageViewRequest(
+            visitorId:   $visitorId,
+            url:         Support::currentUrl(),
+            language:    Support::language(),
+            gaClientId:  Support::gaClientId(),
+            gaSessionId: Support::gaSessionId($settings->gaMeasurementId()),
+        );
 
-        add_action('shutdown', static function () use ($settings, $token, $payload): void {
-            if (function_exists('fastcgi_finish_request')) {
-                fastcgi_finish_request();
-            } elseif (function_exists('litespeed_finish_request')) {
-                litespeed_finish_request();
-            }
-
-            $result = wp_remote_post($settings->baseUri() . '/api/v1/page-view', [
-                'timeout' => $settings->timeoutSeconds(),
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $token,
-                    'Content-Type'  => 'application/json',
-                    'Accept'        => 'application/json',
-                ],
-                'body'    => (string) wp_json_encode($payload),
-            ]);
-
-            Support::log(is_wp_error($result)
-                ? 'page-view failed: ' . $result->get_error_message()
-                : 'page-view sent: ' . wp_remote_retrieve_response_code($result));
-        }, PHP_INT_MAX);
+        AfterResponse::defer(static function () use ($client, $request): void {
+            Support::log($client->pageViewQuietly($request) ? 'page-view sent' : 'page-view failed');
+        });
     }
 
     /**
